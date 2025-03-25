@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dominoes Game</title>
+  <link rel="stylesheet" href="/style.css">
+  <!-- <script src="/api/socket.io/socket.io.js"></script> -->
+</head>
+<body>
+  <div id="game">
+    <input id="playerName" type="text" placeholder="Enter your name">
+    <button onclick="joinGame()">Join Room</button>
+    <p id="roomLink"></p>
+
+    <!-- Waiting Room Section -->
+    <div id="waitingRoom">
+      <h3>Waiting Room</h3>
+      <p id="waitingMessage">Waiting for players...</p>
+      <div id="waitingPlayers"></div>
+    </div>
+
+    <!-- Game Section (hidden until game starts) -->
+    <div id="gameArea" style="display:none;">
+      <div id="players"></div>
+      <div id="board"></div>
+      <div id="hand"></div>
+      <div id="scores" style="display:none;"></div>
+    </div>
+  </div>
+  <script src="/api/socket.io/socket.io.js"></script>
+  <script src="/client.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+.tile {
+  width: 60px;
+  height: 30px;
+  border: 1px solid black;
+  display: inline-block;
+  text-align: center;
+  cursor: pointer;
+}
+.tile:hover { background: #f0f0f0; }
+#board { margin: 20px; }
+@keyframes slideIn {
+  from { transform: translateX(-50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.played { animation: slideIn 0.3s ease; }
+
+/* Add styles for waiting room */
+#waitingRoom {
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+#waitingMessage {
+  font-weight: bold;
+  color: #555;
+}
+#waitingPlayers p {
+  margin: 5px 0;
+}
