@@ -1,4 +1,4 @@
-const socket = io('/api/socket.io', { transports: ['polling'] });
+const socket = io( { transports: ['polling'] });
 let roomId, playerIdx;
 
 function joinGame() {

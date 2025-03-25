@@ -7,7 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     transports: ['polling', 'websocket'], // Allow polling as fallback
-    path: '/api/socket.io' // Explicitly set the path
+    path: '/socket.io' // Explicitly set the path
   });
 
 app.use(express.static('public'));
