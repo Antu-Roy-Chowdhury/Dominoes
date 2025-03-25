@@ -14,7 +14,6 @@
 }
 .played { animation: slideIn 0.3s ease; }
 
-/* Add styles for waiting room */
 #waitingRoom {
   margin: 20px;
   padding: 10px;
@@ -27,4 +26,24 @@
 }
 #waitingPlayers p {
   margin: 5px 0;
+}
+
+/* Add styles for boneyard */
+#boneyard {
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid #999;
+  border-radius: 5px;
+}
+#drawTile {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+#drawTile:hover {
+  background-color: #45a049;
 }

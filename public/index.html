@@ -7,8 +7,16 @@
 </head>
 <body>
   <div id="game">
-    <input id="playerName" type="text" placeholder="Enter your name">
-    <button onclick="joinGame()">Join Room</button>
+    <div id="joinSection">
+      <input id="playerName" type="text" placeholder="Enter your name">
+      <!-- Add dropdown for number of players -->
+      <select id="playerCount" style="display: block; margin: 10px 0;">
+        <option value="2">2 Players</option>
+        <option value="3">3 Players</option>
+        <option value="4">4 Players</option>
+      </select>
+      <button onclick="joinGame()">Join Room</button>
+    </div>
     <p id="roomLink"></p>
 
     <!-- Waiting Room Section -->
@@ -23,6 +31,11 @@
       <div id="players"></div>
       <div id="board"></div>
       <div id="hand"></div>
+      <div id="boneyard" style="display:none;">
+        <h3>Boneyard</h3>
+        <div id="boneyardTiles"></div>
+        <button id="drawTile" onclick="drawTile()" style="display:none;">Draw Tile</button>
+      </div>
       <div id="scores" style="display:none;"></div>
     </div>
   </div>

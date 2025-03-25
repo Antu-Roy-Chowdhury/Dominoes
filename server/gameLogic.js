@@ -11,9 +11,21 @@ function shuffle(array) {
   return array;
 }
 
-function dealTiles() {
-  const shuffled = shuffle([...tiles]);
-  return [shuffled.slice(0, 7), shuffled.slice(7, 14), shuffled.slice(14, 21), shuffled.slice(21)];
+function dealTiles(numPlayers) {
+  const shuffled = shuffle([...tiles]); // Create a fresh copy of tiles
+  const hands = [];
+  const tilesPerPlayer = 7;
+  const totalTilesDealt = numPlayers * tilesPerPlayer;
+
+  // Deal 7 tiles to each player
+  for (let i = 0; i < numPlayers; i++) {
+    hands.push(shuffled.slice(i * tilesPerPlayer, (i + 1) * tilesPerPlayer));
+  }
+
+  // Remaining tiles go to the boneyard
+  const boneyard = shuffled.slice(totalTilesDealt);
+
+  return { hands, boneyard };
 }
 
 function getStartingPlayer(hands) {
