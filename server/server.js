@@ -18,6 +18,27 @@ function generateRoomId() {
   return Math.random().toString(36).substring(2, 8);
 }
 
+
+function canAnyPlayerPlay(room) {
+  const leftTile = room.board[0]?.tile;
+  const rightTile = room.board[room.board.length - 1]?.tile;
+  const leftEnd = leftTile ? leftTile[0] : null;
+  const rightEnd = rightTile ? rightTile[1] : null;
+
+  return room.hands.some((hand, playerIdx) => {
+    return hand.some(tile => {
+      if (room.board.length === 0) return true;
+      const canPlayLeft = leftTile[0] === leftTile[1]
+        ? (tile[0] === leftEnd || tile[1] === leftEnd)
+        : (tile[1] === leftEnd);
+      const canPlayRight = rightTile[0] === rightTile[1]
+        ? (tile[0] === rightEnd || tile[1] === rightEnd)
+        : (tile[0] === rightEnd);
+      return canPlayLeft || canPlayRight;
+    });
+  });
+}
+
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
 
@@ -62,11 +83,23 @@ io.on('connection', (socket) => {
         room.boneyard = boneyard;
         room.turn = getStartingPlayer(hands);
         room.scores = Array(room.expectedPlayers).fill(0);
+        const startingPlayer = room.turn;
+        const highestDouble = [6, 6];
+        for (let double = 6; double >= 0; double--) {
+          const doubleTile = [double, double];
+          if (room.hands[startingPlayer].some(([a, b]) => a === doubleTile[0] && b === doubleTile[1])) {
+            room.board.push({ tile: doubleTile, end: 'right' });
+            room.hands[startingPlayer] = room.hands[startingPlayer].filter(t => t[0] !== doubleTile[0] || t[1] !== doubleTile[1]);
+            room.turn = (room.turn + 1) % room.expectedPlayers;
+            break;
+          }
+        }
         io.to(roomId).emit('start', {
           hands: room.hands,
           boneyard: room.boneyard,
           turn: room.turn,
-          players: room.players
+          players: room.players,
+          board: room.board
         });
       }
     } else {
@@ -79,14 +112,83 @@ io.on('connection', (socket) => {
     console.log(`Player ${socket.id} played tile ${tile} in room ${roomId}`);
     const room = rooms[roomId];
     if (room.turn === room.players.findIndex(p => p.id === socket.id)) {
-      room.board.push({ tile, end });
-      room.hands[room.turn] = room.hands[room.turn].filter(t => t[0] !== tile[0] || t[1] !== tile[1]);
-      room.turn = (room.turn + 1) % room.expectedPlayers;
-
-      if (room.hands[room.turn].length === 0 || !room.hands.some(h => h.length)) {
+      const leftTile = room.board[0]?.tile;
+      const rightTile = room.board[room.board.length - 1]?.tile;
+      const leftEnd = leftTile ? leftTile[0] : null;
+      const rightEnd = rightTile ? rightTile[1] : null;
+      let canPlay = false;
+  
+      if (room.board.length === 0) {
+        canPlay = true;
+      } else if (end === 'left') {
+        if (leftTile[0] === leftTile[1]) {
+          canPlay = tile[0] === leftEnd || tile[1] === leftEnd;
+        } else {
+          canPlay = tile[1] === leftEnd;
+        }
+      } else if (end === 'right') {
+        if (rightTile[0] === rightTile[1]) {
+          canPlay = tile[0] === rightEnd || tile[1] === rightEnd;
+        } else {
+          canPlay = tile[0] === rightEnd;
+        }
+      }
+  
+      if (canPlay) {
+        if (end === 'left') {
+          room.board.unshift({ tile, end }); // Add to the left
+        } else {
+          room.board.push({ tile, end }); // Add to the right
+        }
+        // Ensure the exact tile is removed from the player's hand
+        const playerHand = room.hands[room.turn];
+        const tileIndex = playerHand.findIndex(t => t[0] === tile[0] && t[1] === tile[1]);
+        if (tileIndex !== -1) {
+          room.hands[room.turn].splice(tileIndex, 1);
+        } else {
+          console.error(`Tile ${tile} not found in player ${room.turn}'s hand`);
+        }
+  
+        const emptyHand = room.hands.some(hand => hand.length === 0);
+        const noLegalMoves = room.boneyard.length === 0 && !canAnyPlayerPlay(room);
+        if (emptyHand || noLegalMoves) {
+          const roundScores = calculateScores(room.hands);
+          room.scores = room.scores.map((s, i) => s + roundScores[i]);
+          io.to(roomId).emit('roundEnd', { scores: room.scores, short: noLegalMoves });
+          if (room.scores.some(s => s >= 100)) {
+            io.to(roomId).emit('gameEnd', { scores: room.scores });
+          }
+        } else {
+          room.turn = (room.turn + 1) % room.expectedPlayers;
+          io.to(roomId).emit('update', {
+            board: room.board,
+            hands: room.hands,
+            boneyard: room.boneyard,
+            turn: room.turn,
+            players: room.players
+          });
+        }
+      } else {
+        console.log(`Invalid move by player ${socket.id}`);
+      }
+    }
+  });
+  
+  socket.on('drawTile', ({ roomId }) => {
+    const room = rooms[roomId];
+    const playerIdx = room.players.findIndex(p => p.id === socket.id);
+    if (room.turn === playerIdx && room.boneyard.length > 0) {
+      const randomIndex = Math.floor(Math.random() * room.boneyard.length);
+      const tile = room.boneyard[randomIndex];
+      room.boneyard.splice(randomIndex, 1); // Remove the picked tile
+      room.hands[playerIdx].push(tile);
+  
+      const emptyHand = room.hands.some(hand => hand.length === 0);
+      const noLegalMoves = room.boneyard.length === 0 && !canAnyPlayerPlay(room);
+      if (emptyHand || noLegalMoves) {
         const roundScores = calculateScores(room.hands);
         room.scores = room.scores.map((s, i) => s + roundScores[i]);
-        io.to(roomId).emit('roundEnd', { scores: room.scores });
+        io.to(roomId).emit('roundEnd', { scores: room.scores, short: noLegalMoves });
         if (room.scores.some(s => s >= 100)) {
           io.to(roomId).emit('gameEnd', { scores: room.scores });
         }
@@ -95,24 +197,39 @@ io.on('connection', (socket) => {
           board: room.board,
           hands: room.hands,
           boneyard: room.boneyard,
-          turn: room.turn
+          turn: room.turn,
+          players: room.players
         });
       }
     }
   });
-
-  socket.on('drawTile', ({ roomId }) => {
+  
+  socket.on('skipTurn', ({ roomId }) => {
     const room = rooms[roomId];
     const playerIdx = room.players.findIndex(p => p.id === socket.id);
-    if (room.turn === playerIdx && room.boneyard.length > 0) {
-      const tile = room.boneyard.shift();
-      room.hands[playerIdx].push(tile);
-      io.to(roomId).emit('update', {
-        board: room.board,
-        hands: room.hands,
-        boneyard: room.boneyard,
-        turn: room.turn
-      });
+    if (room.turn === playerIdx) {
+      console.log(`Player ${room.players[playerIdx].name} skipped their turn`);
+      room.turn = (room.turn + 1) % room.expectedPlayers;
+  
+      // Check if any player has 0 tiles after skipping (unlikely, but for consistency)
+      const emptyHand = room.hands.some(hand => hand.length === 0);
+      const noLegalMoves = room.boneyard.length === 0 && !canAnyPlayerPlay(room);
+      if (emptyHand || noLegalMoves) {
+        const roundScores = calculateScores(room.hands);
+        room.scores = room.scores.map((s, i) => s + roundScores[i]);
+        io.to(roomId).emit('roundEnd', { scores: room.scores, short: noLegalMoves });
+        if (room.scores.some(s => s >= 100)) {
+          io.to(roomId).emit('gameEnd', { scores: room.scores });
+        }
+      } else {
+        io.to(roomId).emit('update', {
+          board: room.board,
+          hands: room.hands,
+          boneyard: room.boneyard,
+          turn: room.turn,
+          players: room.players
+        });
+      }
     }
   });
 });

@@ -29,7 +29,16 @@ function dealTiles(numPlayers) {
 }
 
 function getStartingPlayer(hands) {
-  return hands.findIndex(hand => hand.some(([a, b]) => a === 6 && b === 6));
+  // Check for the highest double from [6|6] down to [0|0]
+  for (let double = 6; double >= 0; double--) {
+    const doubleTile = [double, double];
+    const playerIdx = hands.findIndex(hand => hand.some(([a, b]) => a === doubleTile[0] && b === doubleTile[1]));
+    if (playerIdx !== -1) {
+      return playerIdx;
+    }
+  }
+  // If no doubles are found, default to player 0 (this shouldn't happen with standard rules)
+  return 0;
 }
 
 function calculateScores(hands) {

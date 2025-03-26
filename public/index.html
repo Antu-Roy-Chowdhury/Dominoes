@@ -9,7 +9,6 @@
   <div id="game">
     <div id="joinSection">
       <input id="playerName" type="text" placeholder="Enter your name">
-      <!-- Add dropdown for number of players -->
       <select id="playerCount" style="display: block; margin: 10px 0;">
         <option value="2">2 Players</option>
         <option value="3">3 Players</option>
@@ -19,23 +18,23 @@
     </div>
     <p id="roomLink"></p>
 
-    <!-- Waiting Room Section -->
     <div id="waitingRoom">
       <h3>Waiting Room</h3>
       <p id="waitingMessage">Waiting for players...</p>
       <div id="waitingPlayers"></div>
     </div>
 
-    <!-- Game Section (hidden until game starts) -->
     <div id="gameArea" style="display:none;">
       <div id="players"></div>
+      <div id="turnMessage"></div>
       <div id="board"></div>
       <div id="hand"></div>
       <div id="boneyard" style="display:none;">
-        <h3>Boneyard</h3>
+        <h3>Pick</h3>
         <div id="boneyardTiles"></div>
         <button id="drawTile" onclick="drawTile()" style="display:none;">Draw Tile</button>
       </div>
+      <button id="skipTurn" onclick="skipTurn()" style="display:none;">Skip Turn</button>
       <div id="scores" style="display:none;"></div>
     </div>
   </div>
