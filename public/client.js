@@ -1,6 +1,5 @@
 const socket = io('/api', {
-  transports: ['polling'],
-  path: '/api/socket.io'
+  transports: ['polling']
 });
 let roomId, playerIdx, players, currentTurn; // Added currentTurn as a global variable
 

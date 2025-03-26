@@ -7,7 +7,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   transports: ['polling', 'websocket'],
-  path: '/api/socket.io'
+  path: '/socket.io',
+  cors: {
+    origin: 'https://dominoes-antu.vercel.app', // Allow your Vercel frontend
+    methods: ['GET', 'POST']
+  }
 });
 
 app.use(express.static('../public'));
