@@ -7,7 +7,7 @@
     },
     {
       "source": "/socket.io/(.*)",
-      "destination": "/api/socket.io"
+      "destination": "/socket.io"
     },
     {
       "source": "/(.*)",
