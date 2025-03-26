@@ -18,7 +18,6 @@ function generateRoomId() {
   return Math.random().toString(36).substring(2, 8);
 }
 
-// Helper function to check if any player can make a legal move
 function canAnyPlayerPlay(room) {
   const leftTile = room.board[0]?.tile;
   const rightTile = room.board[room.board.length - 1]?.tile;
@@ -58,7 +57,7 @@ io.on('connection', (socket) => {
         scores: [],
         boneyard: [],
         expectedPlayers: parseInt(playerCount),
-        tempLeader: null // Track the temporary leader for the next round
+        tempLeader: null
       };
       console.log(`Created new room: ${roomId} for ${playerCount} players`);
     }
@@ -80,7 +79,6 @@ io.on('connection', (socket) => {
         const { hands, boneyard } = dealTiles(room.expectedPlayers);
         room.hands = hands;
         room.boneyard = boneyard;
-        // Set the starting player based on the highest double, but don't auto-play
         room.turn = room.tempLeader !== null ? room.tempLeader : getStartingPlayer(hands);
         room.scores = Array(room.expectedPlayers).fill(0);
 
@@ -98,8 +96,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('play', ({ roomId, tile, end }) => {
-    console.log(`Player ${socket.id} played tile ${tile} in room ${roomId} on ${end}`);
+  socket.on('play', ({ roomId, tile, end, originalTile }) => {
+    console.log(`Player ${socket.id} played tile ${tile} (original: ${originalTile}) in room ${roomId} on ${end}`);
     const room = rooms[roomId];
     if (room.turn === room.players.findIndex(p => p.id === socket.id)) {
       const leftTile = room.board[0]?.tile;
@@ -108,13 +106,10 @@ io.on('connection', (socket) => {
       const rightEnd = rightTile ? rightTile[1] : null;
       let canPlay = false;
 
-      // Validate the move
       if (room.board.length === 0) {
-        // First tile: If tempLeader is set, they must play a double
         if (room.tempLeader !== null) {
-          canPlay = tile[0] === tile[1]; // Must be a double
+          canPlay = tile[0] === tile[1];
         } else {
-          // Otherwise, must be the highest double (handled by client)
           canPlay = true;
         }
       } else if (end === 'left') {
@@ -138,14 +133,17 @@ io.on('connection', (socket) => {
           room.board.push({ tile, end });
         }
 
-        // Remove the tile from the player's hand
+        // Remove the original tile from the player's hand
         const playerHand = room.hands[room.turn];
-        const tileIndex = playerHand.findIndex(t => t[0] === tile[0] && t[1] === tile[1]);
+        const tileIndex = playerHand.findIndex(t =>
+          (t[0] === originalTile[0] && t[1] === originalTile[1]) ||
+          (t[0] === originalTile[1] && t[1] === originalTile[0])
+        );
         if (tileIndex !== -1) {
           room.hands[room.turn].splice(tileIndex, 1);
           console.log(`Player ${room.turn} hand after play:`, room.hands[room.turn]);
         } else {
-          console.error(`Tile ${tile} not found in player ${room.turn}'s hand`);
+          console.error(`Tile ${originalTile} not found in player ${room.turn}'s hand:`, playerHand);
         }
 
         const emptyHand = room.hands.some(hand => hand.length === 0);
@@ -153,11 +151,10 @@ io.on('connection', (socket) => {
         if (emptyHand || noLegalMoves) {
           const roundScores = calculateScores(room.hands);
           room.scores = room.scores.map((s, i) => s + roundScores[i]);
-          // Determine the temporary leader (lowest scorer)
           const lowestScore = Math.min(...room.scores);
           const lowestScorerIdx = room.scores.indexOf(lowestScore);
           room.tempLeader = lowestScorerIdx;
-          io.to(roomId).emit('roundEnd', { scores: room.scores, roundScores, short: noLegalMoves, tempLeader: room.tempLeader });
+          io.to(roomId).emit('roundEnd', { scores: room.scores, roundScores, short: noLegalMoves, tempLeader: room.tempLeader, players: room.players });
           if (room.scores.some(s => s >= 100)) {
             io.to(roomId).emit('gameEnd', { scores: room.scores });
           }
@@ -194,7 +191,7 @@ io.on('connection', (socket) => {
         const lowestScore = Math.min(...room.scores);
         const lowestScorerIdx = room.scores.indexOf(lowestScore);
         room.tempLeader = lowestScorerIdx;
-        io.to(roomId).emit('roundEnd', { scores: room.scores, roundScores, short: noLegalMoves, tempLeader: room.tempLeader });
+        io.to(roomId).emit('roundEnd', { scores: room.scores, roundScores, short: noLegalMoves, tempLeader: room.tempLeader, players: room.players });
         if (room.scores.some(s => s >= 100)) {
           io.to(roomId).emit('gameEnd', { scores: room.scores });
         }
@@ -225,7 +222,7 @@ io.on('connection', (socket) => {
         const lowestScore = Math.min(...room.scores);
         const lowestScorerIdx = room.scores.indexOf(lowestScore);
         room.tempLeader = lowestScorerIdx;
-        io.to(roomId).emit('roundEnd', { scores: room.scores, roundScores, short: noLegalMoves, tempLeader: room.tempLeader });
+        io.to(roomId).emit('roundEnd', { scores: room.scores, roundScores, short: noLegalMoves, tempLeader: room.tempLeader, players: room.players });
         if (room.scores.some(s => s >= 100)) {
           io.to(roomId).emit('gameEnd', { scores: room.scores });
         }
@@ -241,22 +238,26 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle request to start a new match
   socket.on('startNewMatch', ({ roomId }) => {
     const room = rooms[roomId];
-    const { hands, boneyard } = dealTiles(room.expectedPlayers);
-    room.hands = hands;
-    room.boneyard = boneyard;
-    room.board = [];
-    room.turn = room.tempLeader !== null ? room.tempLeader : getStartingPlayer(hands);
+    if (room) {
+      const { hands, boneyard } = dealTiles(room.expectedPlayers);
+      room.hands = hands;
+      room.boneyard = boneyard;
+      room.board = [];
+      room.turn = room.tempLeader !== null ? room.tempLeader : getStartingPlayer(hands);
 
-    io.to(roomId).emit('start', {
-      hands: room.hands,
-      boneyard: room.boneyard,
-      turn: room.turn,
-      players: room.players,
-      board: room.board
-    });
+      io.to(roomId).emit('start', {
+        hands: room.hands,
+        boneyard: room.boneyard,
+        turn: room.turn,
+        players: room.players,
+        board: room.board
+      });
+      console.log(`New match started in room ${roomId} with turn: ${room.turn}`);
+    } else {
+      console.error(`Room ${roomId} not found for new match`);
+    }
   });
 });
 

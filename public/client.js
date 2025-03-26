@@ -1,5 +1,5 @@
 const socket = io({ transports: ['polling'] });
-let roomId, playerIdx;
+let roomId, playerIdx, players;
 
 function joinGame() {
   const name = document.getElementById('playerName').value || 'Player';
@@ -48,10 +48,11 @@ socket.on('start', ({ hands, boneyard, turn, players, board }) => {
   console.log('Current turn:', turn);
   console.log('Players:', players);
   playerIdx = players.findIndex(p => p.id === socket.id);
+  this.players = players;
   
   document.getElementById('waitingRoom').style.display = 'none';
   document.getElementById('gameArea').style.display = 'block';
-  document.getElementById('roundScoresPopup').style.display = 'none'; // Hide popup on new match
+  document.getElementById('roundScoresPopup').style.display = 'none';
 
   updateHand(hands[playerIdx], turn, board, hands[playerIdx], true);
   updateBoneyard(boneyard);
@@ -63,6 +64,7 @@ socket.on('start', ({ hands, boneyard, turn, players, board }) => {
 socket.on('update', ({ board, hands, boneyard, turn, players }) => {
   console.log('Game update:', { board, hands, boneyard, turn, players });
   console.log('Player hand before update:', hands[playerIdx]);
+  this.players = players;
   updateBoard(board);
   updateHand(hands[playerIdx], turn, board, hands[playerIdx], false);
   updateBoneyard(boneyard);
@@ -72,14 +74,13 @@ socket.on('update', ({ board, hands, boneyard, turn, players }) => {
   document.getElementById('skipTurn').style.display = (turn === playerIdx && !canPlay && boneyard.length === 0) ? 'block' : 'none';
 });
 
-socket.on('roundEnd', ({ scores, roundScores, short, tempLeader }) => {
+socket.on('roundEnd', ({ scores, roundScores, short, tempLeader, players }) => {
   document.getElementById('scores').style.display = 'block';
   document.getElementById('scores').innerHTML = scores.map((s, i) => `Player ${i + 1}: ${s}`).join('<br>');
   if (short) {
     alert('Round ended due to a short! No players can make a legal move.');
   }
 
-  // Show round scores in a popup for 5 seconds
   const popup = document.getElementById('roundScoresPopup');
   const content = document.getElementById('roundScoresContent');
   content.innerHTML = roundScores.map((s, i) => `Player ${i + 1} (${players[i].name}): ${s} points`).join('<br>');
@@ -88,7 +89,6 @@ socket.on('roundEnd', ({ scores, roundScores, short, tempLeader }) => {
     popup.style.display = 'none';
   }, 5000);
 
-  // Add event listener to start new match
   document.getElementById('startNewMatch').onclick = () => {
     socket.emit('startNewMatch', { roomId });
   };
@@ -103,7 +103,7 @@ function updateHand(hand, turn, board, currentHand, isFirstTurn) {
   const handDiv = document.getElementById('hand');
   const isMyTurn = turn === playerIdx;
   handDiv.innerHTML = hand.map(t => {
-    const canPlay = isFirstTurn ? (t[0] === t[1]) : canPlayTile(t, board); // First turn: must play a double
+    const canPlay = isFirstTurn ? (t[0] === t[1]) : canPlayTile(t, board);
     return `
       <div class="tile ${isMyTurn ? 'active' : 'inactive'} ${isMyTurn && canPlay ? 'playable' : 'non-playable'}" 
            ${isMyTurn && canPlay ? `onclick="playTile([${t}], getBoard())"` : ''}>
@@ -146,17 +146,17 @@ function canPlayTile(tile, board) {
 
   const canPlayLeft = leftTile[0] === leftTile[1]
     ? (tile[0] === leftEnd || tile[1] === leftEnd)
-    : (tile[0] === leftEnd || tile[1] === leftEnd); // Allow either number to match
+    : (tile[0] === leftEnd || tile[1] === leftEnd);
   const canPlayRight = rightTile[0] === rightTile[1]
     ? (tile[0] === rightEnd || tile[1] === rightEnd)
-    : (tile[0] === rightEnd || tile[1] === rightEnd); // Allow either number to match
+    : (tile[0] === rightEnd || tile[1] === rightEnd);
 
   return canPlayLeft || canPlayRight;
 }
 
 function playTile(tile, board) {
   if (board.length === 0) {
-    socket.emit('play', { roomId, tile, end: 'right' });
+    socket.emit('play', { roomId, tile, end: 'right', originalTile: tile });
     return;
   }
 
@@ -165,7 +165,6 @@ function playTile(tile, board) {
   const leftEnd = leftTile[0];
   const rightEnd = rightTile[1];
 
-  // Check if the tile can be played on both ends
   const canPlayLeft = leftTile[0] === leftTile[1]
     ? (tile[0] === leftEnd || tile[1] === leftEnd)
     : (tile[0] === leftEnd || tile[1] === leftEnd);
@@ -173,43 +172,53 @@ function playTile(tile, board) {
     ? (tile[0] === rightEnd || tile[1] === rightEnd)
     : (tile[0] === rightEnd || tile[1] === rightEnd);
 
-  // Orient the tile based on the chosen end
   const orientTile = (end) => {
     let orientedTile = [...tile];
     if (end === 'left') {
       if (leftTile[0] === leftTile[1]) {
-        if (tile[0] === leftEnd) orientedTile = [tile[1], tile[0]]; // [6|3] -> [3|6]
+        if (tile[0] === leftEnd) orientedTile = [tile[1], tile[0]];
       } else {
-        if (tile[0] === leftEnd) orientedTile = [tile[1], tile[0]]; // [1|3] -> [3|1]
+        if (tile[0] === leftEnd) orientedTile = [tile[1], tile[0]];
       }
     } else if (end === 'right') {
       if (rightTile[0] === rightTile[1]) {
-        if (tile[1] === rightEnd) orientedTile = [tile[1], tile[0]]; // [5|6] -> [6|5]
+        if (tile[1] === rightEnd) orientedTile = [tile[1], tile[0]];
       } else {
-        if (tile[1] === rightEnd) orientedTile = [tile[1], tile[0]]; // [5|6] -> [6|5]
+        if (tile[1] === rightEnd) orientedTile = [tile[1], tile[0]];
       }
     }
     return orientedTile;
   };
 
-  // If the tile can be played on both ends, let the player choose
   if (canPlayLeft && canPlayRight) {
-    const choice = prompt('Tile can be played on both ends. Type "left" or "right" to choose:');
-    if (choice && (choice.toLowerCase() === 'left' || choice.toLowerCase() === 'right')) {
-      const end = choice.toLowerCase();
-      const orientedTile = orientTile(end);
-      socket.emit('play', { roomId, tile: orientedTile, end });
-    } else {
-      console.log('Invalid choice, defaulting to right');
+    const overlay = document.getElementById('sideChoiceOverlay');
+    const tileDisplay = document.getElementById('sideChoiceTile');
+    tileDisplay.innerText = `Tile: ${tile[0]}|${tile[1]}`;
+    overlay.style.display = 'block';
+
+    const playLeft = () => {
+      const orientedTile = orientTile('left');
+      socket.emit('play', { roomId, tile: orientedTile, end: 'left', originalTile: tile });
+      overlay.style.display = 'none';
+    };
+    const playRight = () => {
       const orientedTile = orientTile('right');
-      socket.emit('play', { roomId, tile: orientedTile, end: 'right' });
-    }
+      socket.emit('play', { roomId, tile: orientedTile, end: 'right', originalTile: tile });
+      overlay.style.display = 'none';
+    };
+    const cancel = () => {
+      overlay.style.display = 'none';
+    };
+
+    document.getElementById('playLeft').onclick = playLeft;
+    document.getElementById('playRight').onclick = playRight;
+    document.getElementById('cancelChoice').onclick = cancel;
   } else if (canPlayLeft) {
     const orientedTile = orientTile('left');
-    socket.emit('play', { roomId, tile: orientedTile, end: 'left' });
+    socket.emit('play', { roomId, tile: orientedTile, end: 'left', originalTile: tile });
   } else if (canPlayRight) {
     const orientedTile = orientTile('right');
-    socket.emit('play', { roomId, tile: orientedTile, end: 'right' });
+    socket.emit('play', { roomId, tile: orientedTile, end: 'right', originalTile: tile });
   } else {
     console.log('Cannot play this tile');
   }

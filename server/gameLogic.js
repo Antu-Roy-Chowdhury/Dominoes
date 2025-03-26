@@ -12,7 +12,7 @@ function shuffle(array) {
 }
 
 function dealTiles(numPlayers) {
-  const shuffled = shuffle([...tiles]); // Create a fresh copy of tiles
+  const shuffled = shuffle([...tiles]);
   const hands = [];
   const tilesPerPlayer = 7;
   const totalTilesDealt = numPlayers * tilesPerPlayer;
@@ -22,12 +22,11 @@ function dealTiles(numPlayers) {
   }
 
   const boneyard = shuffled.slice(totalTilesDealt);
-
   return { hands, boneyard };
 }
 
 function getStartingPlayer(hands) {
-  // Check for the highest double from [6|6] down to [0|0]
+  // Find the player with the highest double
   for (let double = 6; double >= 0; double--) {
     const doubleTile = [double, double];
     const playerIdx = hands.findIndex(hand => hand.some(([a, b]) => a === doubleTile[0] && b === doubleTile[1]));
@@ -35,8 +34,7 @@ function getStartingPlayer(hands) {
       return playerIdx;
     }
   }
-  // If no doubles are found, default to player 0 (this shouldn't happen with standard rules)
-  return 0;
+  return 0; // Default to player 0 if no doubles (shouldn't happen)
 }
 
 function calculateScores(hands) {

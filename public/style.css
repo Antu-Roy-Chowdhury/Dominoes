@@ -66,24 +66,22 @@
   font-size: 18px;
 }
 
-/* Updated tile styles for active, inactive, and non-playable tiles */
 .tile.active.playable {
-  background-color: #0a81e3; /* Blue for playable tiles of active player */
+  background-color: #2196F3;
   color: white;
   cursor: pointer;
 }
 .tile.active.non-playable {
-  background-color: #000000; /* Black for non-playable tiles of active player */
+  background-color: #000000;
   color: white;
   cursor: not-allowed;
 }
 .tile.inactive {
-  background-color: #B0BEC5; /* Gray for inactive players' tiles */
+  background-color: #B0BEC5;
   color: #666;
   cursor: not-allowed;
 }
 
-/* Added styles for round scores popup */
 #roundScoresPopup {
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
@@ -96,5 +94,20 @@
   cursor: pointer;
 }
 #startNewMatch:hover {
+  background-color: #1976D2;
+}
+
+#sideChoiceOverlay {
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+#playLeft, #playRight, #cancelChoice {
+  padding: 5px 10px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+#playLeft:hover, #playRight:hover, #cancelChoice:hover {
   background-color: #1976D2;
 }
