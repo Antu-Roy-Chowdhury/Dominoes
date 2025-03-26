@@ -92,7 +92,7 @@ io.on('connection', (socket) => {
     if (room.players.length < room.expectedPlayers) {
       socket.join(roomId);
       room.players.push({ id: socket.id, name });
-      socket.emit('roomJoined', { roomId, url: `https://dominoes-antu.vercel.app/?room=${roomId}` });
+      socket.emit('roomJoined', { roomId, url: `http://localhost:3000/?room=${roomId}` });
       console.log(`Room ${roomId} now has ${room.players.length} players`);
 
       io.to(roomId).emit('updateWaitingRoom', {

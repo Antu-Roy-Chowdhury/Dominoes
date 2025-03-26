@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 const socket = io('/api', {
   transports: ['polling']
 });
+=======
+const socket = io({ transports: ['polling'] });
+>>>>>>> parent of 65a7e98 (2st attemt to push into vercel)
 let roomId, playerIdx, players, currentTurn; // Added currentTurn as a global variable
 
 function joinGame() {
