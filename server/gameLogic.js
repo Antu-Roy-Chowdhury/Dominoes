@@ -17,12 +17,10 @@ function dealTiles(numPlayers) {
   const tilesPerPlayer = 7;
   const totalTilesDealt = numPlayers * tilesPerPlayer;
 
-  // Deal 7 tiles to each player
   for (let i = 0; i < numPlayers; i++) {
     hands.push(shuffled.slice(i * tilesPerPlayer, (i + 1) * tilesPerPlayer));
   }
 
-  // Remaining tiles go to the boneyard
   const boneyard = shuffled.slice(totalTilesDealt);
 
   return { hands, boneyard };

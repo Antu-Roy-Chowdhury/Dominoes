@@ -30,12 +30,18 @@
       <div id="board"></div>
       <div id="hand"></div>
       <div id="boneyard" style="display:none;">
-        <h3>Pick</h3>
+        <h3>Draw Tiles</h3>
         <div id="boneyardTiles"></div>
         <button id="drawTile" onclick="drawTile()" style="display:none;">Draw Tile</button>
       </div>
       <button id="skipTurn" onclick="skipTurn()" style="display:none;">Skip Turn</button>
       <div id="scores" style="display:none;"></div>
+      <!-- Added for scores popup -->
+      <div id="scoresPopup" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 2px solid black; z-index: 1000;">
+        <h3>Round Scores</h3>
+        <div id="scoresContent"></div>
+        <button id="startNewMatch" style="display:none; margin-top: 10px;">Start New Match</button>
+      </div>
     </div>
   </div>
   <script src="/socket.io/socket.io.js"></script>
