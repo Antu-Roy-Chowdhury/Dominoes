@@ -6,7 +6,7 @@
       "destination": "/api"
     },
     {
-      "source": "/socket.io/(.*)",
+      "source": "/api/socket.io/(.*)",
       "destination": "/api/socket.io"
     },
     {

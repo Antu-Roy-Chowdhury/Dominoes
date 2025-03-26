@@ -1,4 +1,7 @@
-const socket = io('/api', { transports: ['polling'] });
+const socket = io('/api', {
+  transports: ['polling'],
+  path: '/api/socket.io'
+});
 let roomId, playerIdx, players, currentTurn; // Added currentTurn as a global variable
 
 function joinGame() {

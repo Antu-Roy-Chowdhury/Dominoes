@@ -7,7 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   transports: ['polling', 'websocket'],
-  path: '/socket.io'
+  path: '/api/socket.io'
 });
 
 app.use(express.static('../public'));
