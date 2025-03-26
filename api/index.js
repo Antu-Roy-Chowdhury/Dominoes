@@ -10,7 +10,7 @@ const io = new Server(server, {
   path: '/socket.io'
 });
 
-app.use(express.static('public'));
+app.use(express.static('../public'));
 
 const rooms = {};
 
