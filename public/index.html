@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dominoes Game</title>
+  <title>Dominoes</title>
   <link rel="stylesheet" href="/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="game">
+    <h1 class="game-title">Dominoes</h1>
     <div id="joinSection">
       <input id="playerName" type="text" placeholder="Enter your name">
       <select id="playerCount" style="display: block; margin: 10px 0;">
@@ -16,7 +18,10 @@
       </select>
       <button onclick="joinGame()">Join Room</button>
     </div>
-    <p id="roomLink"></p>
+    <div id="roomLinkContainer">
+      <a id="roomLink" href="#" target="_blank"></a>
+      <button id="copyLink" style="display:none;" onclick="copyRoomLink()">Copy Link</button>
+    </div>
 
     <div id="waitingRoom">
       <h3>Waiting Room</h3>
@@ -29,6 +34,8 @@
       <div id="turnMessage"></div>
       <div id="board"></div>
       <div id="hand"></div>
+      <!-- Added reshuffle button -->
+      <button id="reshuffleButton" style="display:none;" onclick="requestReshuffle()">Reshuffle Tiles</button>
       <div id="boneyard" style="display:none;">
         <h3>Boneyard</h3>
         <div id="boneyardTiles"></div>
@@ -46,11 +53,22 @@
         <p id="sideChoiceTile"></p>
         <button id="playLeft" style="margin-right: 10px;">Left</button>
         <button id="playRight" style="margin-right: 10px;">Right</button>
-        <!-- Added Cancel button -->
         <button id="cancelChoice">Cancel</button>
+      </div>
+      <div id="chatSection">
+        <h3>Chat</h3>
+        <div id="chatMessages"></div>
+        <div id="chatInputContainer">
+          <input id="chatInput" type="text" placeholder="Waiting for game to start..." disabled>
+          <button onclick="sendMessage()" disabled>Send</button>
+        </div>
       </div>
     </div>
   </div>
+  <!-- Added footer -->
+  <footer>
+    <p>This game is created by <b>Antu Roy Chowdhury</b> <br>for his loving brothers <i>Amit vai, Isam vai, Siddiq vai, Biddut vai </i>and others.</p>
+  </footer>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/client.js"></script>
 </body>

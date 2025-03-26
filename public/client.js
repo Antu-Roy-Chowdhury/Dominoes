@@ -1,5 +1,5 @@
 const socket = io({ transports: ['polling'] });
-let roomId, playerIdx, players;
+let roomId, playerIdx, players, currentTurn; // Added currentTurn as a global variable
 
 function joinGame() {
   const name = document.getElementById('playerName').value || 'Player';
@@ -16,13 +16,23 @@ function joinGame() {
   console.log(`Joining room ${roomId} as ${name}`);
 }
 
+function copyRoomLink() {
+  const url = document.getElementById('roomLink').href;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('Room link copied to clipboard!');
+  });
+}
+
 socket.on('connect', () => {
   console.log('Connected to server');
 });
 
 socket.on('roomJoined', ({ roomId, url }) => {
   console.log(`Room joined: ${roomId}, URL: ${url}`);
-  document.getElementById('roomLink').innerText = `Share: ${url}`;
+  const roomLink = document.getElementById('roomLink');
+  roomLink.href = url;
+  roomLink.innerText = url;
+  document.getElementById('copyLink').style.display = 'inline-block';
   document.getElementById('joinSection').style.display = 'none';
 });
 
@@ -49,22 +59,35 @@ socket.on('start', ({ hands, boneyard, turn, players, board }) => {
   console.log('Players:', players);
   playerIdx = players.findIndex(p => p.id === socket.id);
   this.players = players;
+  currentTurn = turn; // Store the turn globally
   
   document.getElementById('waitingRoom').style.display = 'none';
   document.getElementById('gameArea').style.display = 'block';
   document.getElementById('roundScoresPopup').style.display = 'none';
+
+  // Enable chat now that the game has started
+  const chatInput = document.getElementById('chatInput');
+  const chatButton = document.querySelector('#chatInputContainer button');
+  chatInput.disabled = false;
+  chatInput.placeholder = 'Type a message...';
+  chatButton.disabled = false;
 
   updateHand(hands[playerIdx], turn, board, hands[playerIdx], true);
   updateBoneyard(boneyard);
   updateBoard(board);
   updatePlayers(players);
   updateTurnMessage(turn, players);
+
+  // Check for 5 pairs in the player's hand
+  const pairs = hands[playerIdx].filter(tile => tile[0] === tile[1]).length;
+  document.getElementById('reshuffleButton').style.display = pairs >= 5 ? 'block' : 'none';
 });
 
 socket.on('update', ({ board, hands, boneyard, turn, players }) => {
   console.log('Game update:', { board, hands, boneyard, turn, players });
   console.log('Player hand before update:', hands[playerIdx]);
   this.players = players;
+  currentTurn = turn; // Update the turn globally
   updateBoard(board);
   updateHand(hands[playerIdx], turn, board, hands[playerIdx], false);
   updateBoneyard(boneyard);
@@ -76,27 +99,45 @@ socket.on('update', ({ board, hands, boneyard, turn, players }) => {
 
 socket.on('roundEnd', ({ scores, roundScores, short, tempLeader, players }) => {
   document.getElementById('scores').style.display = 'block';
-  document.getElementById('scores').innerHTML = scores.map((s, i) => `Player ${i + 1}: ${s}`).join('<br>');
+  document.getElementById('scores').innerHTML = scores.map((s, i) => `${players[i].name}: ${s}`).join('<br>');
   if (short) {
-    alert('Round ended due to a short! No players can make a legal move.');
+    alert('Round ended due to a short! No players can make a legal move. Starting new match...');
   }
 
   const popup = document.getElementById('roundScoresPopup');
   const content = document.getElementById('roundScoresContent');
-  content.innerHTML = roundScores.map((s, i) => `Player ${i + 1} (${players[i].name}): ${s} points`).join('<br>');
+  content.innerHTML = roundScores.map((s, i) => `${players[i].name}: ${s} points`).join('<br>');
   popup.style.display = 'block';
-  setTimeout(() => {
-    popup.style.display = 'none';
-  }, 5000);
+  if (!short) {
+    setTimeout(() => {
+      popup.style.display = 'none';
+    }, 5000);
+  }
 
-  document.getElementById('startNewMatch').onclick = () => {
-    socket.emit('startNewMatch', { roomId });
-  };
+  if (!short) {
+    document.getElementById('startNewMatch').onclick = () => {
+      socket.emit('startNewMatch', { roomId });
+    };
+  } else {
+    document.getElementById('startNewMatch').style.display = 'none';
+  }
 });
 
 socket.on('gameEnd', ({ scores }) => {
   const winner = scores.indexOf(Math.min(...scores));
-  alert(`Game Over! Winner: Player ${winner + 1}`);
+  alert(`Game Over! Winner: ${players[winner].name}`);
+});
+
+socket.on('reshuffled', ({ hands, boneyard }) => {
+  updateHand(hands[playerIdx], currentTurn, getBoard(), hands[playerIdx], true);
+  updateBoneyard(boneyard);
+  document.getElementById('reshuffleButton').style.display = 'none';
+});
+
+socket.on('chatMessage', ({ playerName, message }) => {
+  const chatMessages = document.getElementById('chatMessages');
+  chatMessages.innerHTML += `<p><strong>${playerName}:</strong> ${message}</p>`;
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
 function updateHand(hand, turn, board, currentHand, isFirstTurn) {
@@ -239,4 +280,20 @@ function drawTile() {
 
 function skipTurn() {
   socket.emit('skipTurn', { roomId });
+}
+
+function requestReshuffle() {
+  socket.emit('reshuffle', { roomId });
+}
+
+function sendMessage() {
+  const chatInput = document.getElementById('chatInput');
+  const message = chatInput.value.trim();
+  if (message && players && typeof playerIdx !== 'undefined') {
+    const playerName = players[playerIdx].name;
+    socket.emit('chatMessage', { roomId, message, playerName });
+    chatInput.value = '';
+  } else {
+    alert('Chat is not available yet. Developer Antu is working on that feature.');
+  }
 }
