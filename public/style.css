@@ -10,10 +10,10 @@ body {
 
 #game {
   flex: 1;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   background: #ffffff;
-  padding: 20px;
+  padding: 10px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -21,45 +21,48 @@ body {
 .game-title {
   text-align: center;
   color: #2196F3;
-  margin-bottom: 20px;
-  font-size: 2.5em;
+  margin-bottom: 15px;
+  font-size: 1.8em;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .tile {
-  width: 60px;
-  height: 30px;
+  width: 50px;
+  height: 25px;
   border: 1px solid #333;
   display: inline-block;
   text-align: center;
   cursor: pointer;
   background-color: #fff;
   border-radius: 5px;
-  line-height: 30px;
+  line-height: 25px;
   margin: 2px;
-  transition: transform 0.2s;
+  transition: transform 0.4s;
 }
 .tile:hover {
   background: #e0e0e0;
   transform: scale(1.05);
 }
 #board {
-  margin: 20px;
-  padding: 10px;
+  margin: 10px;
+  padding: 5px;
   background: #e8f5e9;
   border-radius: 5px;
+  display: flex;
+  flex-wrap: wrap; /* Allow tiles to wrap on small screens */
+  gap: 2px;
 }
 @keyframes slideIn {
   from { transform: translateX(-50px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
 .played {
-  animation: slideIn 0.3s ease;
+  animation: slideIn 0.4s ease;
 }
 
 #waitingRoom {
-  margin: 20px;
-  padding: 15px;
+  margin: 10px;
+  padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
   background: #f9f9f9;
@@ -74,8 +77,8 @@ body {
 }
 
 #boneyard {
-  margin: 20px;
-  padding: 10px;
+  margin: 10px;
+  padding: 5px;
   border: 1px solid #999;
   border-radius: 5px;
   background: #f0f0f0;
@@ -94,8 +97,8 @@ body {
 }
 
 #skipTurn {
-  margin: 10px;
-  padding: 5px 10px;
+  margin: 5px;
+  padding: 5px 8px;
   background-color: #f44336;
   color: white;
   border: none;
@@ -133,6 +136,9 @@ body {
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
   background: #fff;
   border-radius: 10px;
+  padding: 15px;
+  width: 90%; /* Responsive width */
+  max-width: 300px; /* Limit width on larger screens */
 }
 #startNewMatch {
   padding: 5px 10px;
@@ -171,6 +177,7 @@ body {
   color: #2196F3;
   text-decoration: none;
   font-weight: bold;
+  word-break: break-all;
 }
 #roomLink:hover {
   text-decoration: underline;
@@ -208,12 +215,13 @@ body {
   border-radius: 5px;
   background: #f9f9f9;
   max-width: 400px;
+  max-width: 100%;
 }
 #chatMessages {
-  height: 200px;
+  height: 150px;
   overflow-y: auto;
   border: 1px solid #ddd;
-  padding: 10px;
+  padding: 5px;
   margin-bottom: 10px;
   background: #fff;
   border-radius: 5px;
@@ -258,4 +266,141 @@ footer {
   color: white;
   margin-top: 20px;
   border-radius: 5px;
+}
+
+/* Join Section */
+#joinSection {
+  text-align: center;
+}
+
+#playerName, #playerCount {
+  width: 100%;
+  max-width: 300px;
+  padding: 5px;
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+#joinSection button {
+  padding: 5px 10px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#joinSection button:hover {
+  background-color: #1976D2;
+}
+
+/* Players List */
+#players {
+  margin: 10px 0;
+  text-align: center;
+}
+
+#players p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+/* Hand */
+#hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+/* Scores */
+#scores {
+  margin: 10px 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Media Queries for Mobile */
+@media (max-width: 768px) {
+  .game-title {
+    font-size: 1.5em;
+  }
+
+  .tile {
+    width: 40px; /* Even smaller tiles for smaller screens */
+    height: 20px;
+    line-height: 20px;
+    font-size: 12px;
+  }
+
+  #board {
+    margin: 5px;
+    padding: 5px;
+  }
+
+  #waitingRoom, #boneyard, #chatSection {
+    margin: 5px;
+    padding: 5px;
+  }
+
+  #chatMessages {
+    height: 100px; /* Further reduced height for mobile */
+  }
+
+  #turnMessage {
+    font-size: 14px;
+  }
+
+  #drawTile, #skipTurn, #reshuffleButton, #startNewMatch, #playLeft, #playRight, #cancelChoice, #copyLink, #chatInputContainer button {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+
+  #playerName, #playerCount, #chatInput {
+    font-size: 12px;
+  }
+
+  #joinSection button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  #players p, #scores, #waitingMessage, #waitingPlayers p {
+    font-size: 12px;
+  }
+
+  #roundScoresPopup, #sideChoiceOverlay {
+    padding: 10px;
+    width: 90%;
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-title {
+    font-size: 1.2em;
+  }
+
+  .tile {
+    width: 35px;
+    height: 18px;
+    line-height: 18px;
+    font-size: 10px;
+  }
+
+  #chatMessages {
+    height: 80px;
+  }
+
+  #turnMessage {
+    font-size: 12px;
+  }
+
+  footer {
+    font-size: 10px;
+  }
 }

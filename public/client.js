@@ -1,11 +1,5 @@
-<<<<<<< HEAD
-const socket = io('/api', {
-  transports: ['polling']
-});
-=======
-const socket = io({ transports: ['polling'] });
->>>>>>> parent of 65a7e98 (2st attemt to push into vercel)
-let roomId, playerIdx, players, currentTurn; // Added currentTurn as a global variable
+const socket = io('/', { transports: ['polling'] }); // Updated for Railway deployment
+let roomId, playerIdx, players, currentTurn;
 
 function joinGame() {
   const name = document.getElementById('playerName').value || 'Player';
@@ -65,13 +59,12 @@ socket.on('start', ({ hands, boneyard, turn, players, board }) => {
   console.log('Players:', players);
   playerIdx = players.findIndex(p => p.id === socket.id);
   this.players = players;
-  currentTurn = turn; // Store the turn globally
+  currentTurn = turn;
   
   document.getElementById('waitingRoom').style.display = 'none';
   document.getElementById('gameArea').style.display = 'block';
   document.getElementById('roundScoresPopup').style.display = 'none';
 
-  // Enable chat now that the game has started
   const chatInput = document.getElementById('chatInput');
   const chatButton = document.querySelector('#chatInputContainer button');
   chatInput.disabled = false;
@@ -84,7 +77,6 @@ socket.on('start', ({ hands, boneyard, turn, players, board }) => {
   updatePlayers(players);
   updateTurnMessage(turn, players);
 
-  // Check for 5 pairs in the player's hand
   const pairs = hands[playerIdx].filter(tile => tile[0] === tile[1]).length;
   document.getElementById('reshuffleButton').style.display = pairs >= 5 ? 'block' : 'none';
 });
@@ -93,7 +85,7 @@ socket.on('update', ({ board, hands, boneyard, turn, players }) => {
   console.log('Game update:', { board, hands, boneyard, turn, players });
   console.log('Player hand before update:', hands[playerIdx]);
   this.players = players;
-  currentTurn = turn; // Update the turn globally
+  currentTurn = turn;
   updateBoard(board);
   updateHand(hands[playerIdx], turn, board, hands[playerIdx], false);
   updateBoneyard(boneyard);
@@ -153,12 +145,28 @@ function updateHand(hand, turn, board, currentHand, isFirstTurn) {
     const canPlay = isFirstTurn ? (t[0] === t[1]) : canPlayTile(t, board);
     return `
       <div class="tile ${isMyTurn ? 'active' : 'inactive'} ${isMyTurn && canPlay ? 'playable' : 'non-playable'}" 
-           ${isMyTurn && canPlay ? `onclick="playTile([${t}], getBoard())"` : ''}>
+           data-tile="[${t}]">
         ${t[0]}|${t[1]}
       </div>
     `;
   }).join('');
   console.log('Updated hand:', hand);
+
+  // Add touch event listeners for mobile
+  const tiles = handDiv.getElementsByClassName('tile');
+  Array.from(tiles).forEach(tile => {
+    if (tile.classList.contains('playable')) {
+      tile.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent scrolling on touch
+        const tileData = JSON.parse(tile.getAttribute('data-tile'));
+        playTile(tileData, board);
+      });
+      tile.addEventListener('click', (e) => {
+        const tileData = JSON.parse(tile.getAttribute('data-tile'));
+        playTile(tileData, board);
+      });
+    }
+  });
 }
 
 function updateBoard(board) {
@@ -258,8 +266,20 @@ function playTile(tile, board) {
     };
 
     document.getElementById('playLeft').onclick = playLeft;
+    document.getElementById('playLeft').ontouchstart = (e) => {
+      e.preventDefault();
+      playLeft();
+    };
     document.getElementById('playRight').onclick = playRight;
+    document.getElementById('playRight').ontouchstart = (e) => {
+      e.preventDefault();
+      playRight();
+    };
     document.getElementById('cancelChoice').onclick = cancel;
+    document.getElementById('cancelChoice').ontouchstart = (e) => {
+      e.preventDefault();
+      cancel();
+    };
   } else if (canPlayLeft) {
     const orientedTile = orientTile('left');
     socket.emit('play', { roomId, tile: orientedTile, end: 'left', originalTile: tile });
@@ -300,6 +320,14 @@ function sendMessage() {
     socket.emit('chatMessage', { roomId, message, playerName });
     chatInput.value = '';
   } else {
-    alert('Chat is not available yet. Developer Antu is working on that feature.');
+    alert('Chat is not available yet. Please wait for the game to start.');
   }
 }
+
+// Add Enter key listener for chat input on mobile
+document.getElementById('chatInput').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendMessage();
+  }
+});

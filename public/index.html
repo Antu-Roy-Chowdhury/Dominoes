@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Added viewport meta tag -->
   <title>Dominoes</title>
   <link rel="stylesheet" href="/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -11,7 +12,7 @@
     <h1 class="game-title">Dominoes</h1>
     <div id="joinSection">
       <input id="playerName" type="text" placeholder="Enter your name">
-      <select id="playerCount" style="display: block; margin: 10px 0;">
+      <select id="playerCount">
         <option value="2">2 Players</option>
         <option value="3">3 Players</option>
         <option value="4">4 Players</option>
@@ -34,7 +35,6 @@
       <div id="turnMessage"></div>
       <div id="board"></div>
       <div id="hand"></div>
-      <!-- Added reshuffle button -->
       <button id="reshuffleButton" style="display:none;" onclick="requestReshuffle()">Reshuffle Tiles</button>
       <div id="boneyard" style="display:none;">
         <h3>Boneyard</h3>
@@ -65,7 +65,6 @@
       </div>
     </div>
   </div>
-  <!-- Added footer -->
   <footer>
     <p>This game is created by <b>Antu Roy Chowdhury</b> <br>for his loving brothers <i>Amit vai, Isam vai, Siddiq vai, Biddut vai </i>and others.</p>
   </footer>
