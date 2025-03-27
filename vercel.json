@@ -11,8 +11,7 @@
       "destination": "/api"
 =======
       "source": "/socket.io/(.*)",
-      "destination": "/api/socket.io"
->>>>>>> c26befb (1st attemt to push into vercel)
+      "destination": "/socket.io"
     },
     {
       "source": "/(.*)",
