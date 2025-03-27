@@ -4,11 +4,7 @@
     "main": "api/index.js",
     "scripts": {
         "start": "node api/index.js",
-<<<<<<< HEAD
-        "dev": "node api/index.js"
-=======
         "dev": "nodemon api/index.js"
->>>>>>> c26befb (1st attemt to push into vercel)
     },
     "dependencies": {
         "express": "^4.18.2",
