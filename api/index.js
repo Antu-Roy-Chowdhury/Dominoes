@@ -1,6 +1,6 @@
 const express = require('express');
 const http = require('http');
-const path = require('path'); // Added for robust file path handling
+const path = require('path');
 const { Server } = require('socket.io');
 const { dealTiles, getStartingPlayer, calculateScores } = require('./gameLogic');
 
@@ -11,16 +11,23 @@ const io = new Server(server, {
   path: '/socket.io',
   cors: {
     origin: [
-      process.env.RAILWAY_PUBLIC_DOMAIN ? `https://dominoes-production.up.railway.app/` : 'http://localhost:3000',
-      'https://dominoes-production.up.railway.app/' // Allow local development
+      process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'http://localhost:3000',
+      'http://localhost:3000'
     ],
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, '../public')));
+// Resolve the path to the 'public' directory and log it for debugging
+const publicPath = path.join(__dirname, '../public');
+console.log(`Serving static files from: ${publicPath}`);
+app.use(express.static(publicPath));
+
+// Fallback route to serve index.html for the root URL
+app.get('/', (req, res) => {
+  res.sendFile(path.join(publicPath, 'index.html'));
+});
 
 const rooms = {};
 
@@ -36,9 +43,8 @@ io.on('connection', (socket) => {
     const room = rooms[roomId];
     room.players.push({ id: socket.id, name });
 
-    // Use Railway's public domain or fallback to localhost
     const baseUrl = process.env.RAILWAY_PUBLIC_DOMAIN
-      ? `https://dominoes-production.up.railway.app/`
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
       : 'http://localhost:3000';
     socket.emit('roomJoined', { roomId, url: `${baseUrl}?room=${roomId}` });
 
